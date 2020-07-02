@@ -14,6 +14,8 @@ from openedx.core.djangoapps.waffle_utils.testutils import override_waffle_flag
 from student.models import CourseEnrollment
 from student.tests.factories import UserFactory
 
+CREDIT_SUPPORT_URL = 'https://support.edx.org/hc/en-us/sections/115004154688-Purchasing-Academic-Credit'
+
 
 @override_waffle_flag(COURSE_HOME_MICROFRONTEND, active=True)
 @ddt.ddt
@@ -36,6 +38,9 @@ class ProgressTabTestViews(BaseCourseHomeTests):
         for chapter in response.data['courseware_summary']:
             self.assertIsNotNone(chapter)
         self.assertIn('settings/grading/' + str(self.course.id), response.data['studio_url'])
+        self.assertEqual(response.data['credit_support_url'], CREDIT_SUPPORT_URL)
+        self.assertIsNotNone(response.data['verification_data'])
+        self.assertNotEqual(response.data['verification_data']['status'], '')
 
     def test_get_authenticated_user_not_enrolled(self):
         response = self.client.get(self.url)

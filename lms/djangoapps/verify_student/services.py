@@ -173,6 +173,7 @@ class IDVerificationService(object):
             'status': 'none',
             'error': '',
             'should_display': True,
+            'status_date': '',
             'verification_expiry': '',
         }
 
@@ -218,6 +219,7 @@ class IDVerificationService(object):
             expiration_datetime = cls.get_expiration_datetime(user, ['approved'])
             if getattr(attempt, 'expiry_date', None) and is_verification_expiring_soon(expiration_datetime):
                 user_status['verification_expiry'] = attempt.expiry_date.date().strftime("%m/%d/%Y")
+            user_status['status_date'] = attempt.status_changed
 
         elif attempt.status in ['submitted', 'approved', 'must_retry']:
             # user_has_valid_or_pending does include 'approved', but if we are
