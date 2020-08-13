@@ -10,6 +10,8 @@ from rest_framework import permissions, views
 from rest_framework.response import Response
 from waffle.models import Flag, Switch
 
+from .models import WaffleFlagCourseOverrideModel
+
 
 class ToggleStateView(views.APIView):
     """
@@ -53,6 +55,7 @@ class ToggleStateView(views.APIView):
         """
         flags_dict = {}
         self._add_waffle_flag_state(flags_dict)
+        self._add_waffle_flag_course_override_state(flags_dict)
         flag_list = list(flags_dict.values())
         flag_list.sort(key=lambda toggle: toggle['name'])
         return flag_list
@@ -75,6 +78,22 @@ class ToggleStateView(views.APIView):
                 flag['note'] = flag_data.note
             flag['created'] = str(flag_data.created)
             flag['modified'] = str(flag_data.modified)
+
+    def _add_waffle_flag_course_override_state(self, flags_dict):
+        """
+        Add waffle flag course override state from the WaffleFlagCourseOverrideModel model.
+        """
+        course_overrides_data = WaffleFlagCourseOverrideModel.objects.filter(enabled=True).order_by('waffle_flag', 'override_choice', 'course_id')
+        for course_override_data in course_overrides_data:
+            flag = self._get_or_create_toggle_response(flags_dict, course_override_data.waffle_flag)
+            if 'course_overrides' not in flag:
+                flag['course_overrides'] = []
+            course_overrides = flag['course_overrides']
+            course_override = OrderedDict()
+            course_override['course_id'] = str(course_override_data.course_id)
+            course_override['force'] = course_override_data.override_choice
+            course_override['modified'] = str(course_override_data.change_date)
+            course_overrides.append(course_override)
 
     def _get_or_create_toggle_response(self, toggles_dict, toggle_name):
         """
